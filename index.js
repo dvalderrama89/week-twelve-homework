@@ -10,31 +10,65 @@ const connection = mysql.createConnection({
   database: 'employee_db',
 });
 
-connection.connect((err) => {
+connection.connect(async (err) => {
     if (err) throw err;
     console.log(`connected as id ${connection.threadId}`);
-    optionMenu();
+    await optionMenu();
+    connection.end();
 });
 
-function optionMenu() {
-    inquirer
+async function optionMenu() {
+    const data = await inquirer
     .prompt(
     {
         type: 'list',
         message: 'What would you like to do? (User arrow keys)',
         name: 'actionType',
-        choices: ['View All Employees', 'View All Employees By Department', 'View All Employees By Manager', 'Add Employee', 'Remove Employee', 'Update Employee Role', 'Update Employee Manager'],
-    })
-    .then((data) => {
-        switch(data.actionType) {
-            case 'View All Employees': logEmployees();
-            default: break;
+        choices: ['Add Department', 'Add Role', 'Add Employee', 'View All Departments', 'View All Employees', 'Exit'],
+    });
+
+    switch(data.actionType) {
+        case 'Add Department' : await addDepartment(); break;
+        case 'Add Role': await addRole(); break;
+        case 'Add Employee': await addEmployee(); break;
+        case 'View All Departments': await displayDepartments(); break;
+        case 'View All Employees': await displayEmployees(); break;
+        case 'Exit': connection.end(); process.exit(0); break;
+        default: break;
+    }
+
+    await optionMenu();
+}
+
+async function addDepartment() {
+    const data = await inquirer
+    .prompt(
+        {
+            type: 'input',
+            message: 'Input the Department name',
+            name: 'deptartmentName'
         }
-        connection.end();
+    );
+    connection.query(`INSERT INTO department (name) VALUES ("${data.deptartmentName}")`);
+}
+
+async function addRole() {
+
+}
+
+async function addEmployee() {
+
+}
+
+async function displayDepartments() {
+    connection.query(`SELECT * FROM department`,
+    (err, res) => {
+        console.log('\n');
+        console.table(res);
     });
 }
 
-function logEmployees() {
+async function displayEmployees() {
     connection.query(`SELECT employee.id, first_name, last_name, title, department.name AS department, role.salary FROM employee
     LEFT JOIN role
     ON employee.role_id = role.id
