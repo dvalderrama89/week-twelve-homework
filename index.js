@@ -24,7 +24,7 @@ async function optionMenu() {
         type: 'list',
         message: 'What would you like to do? (User arrow keys)',
         name: 'actionType',
-        choices: ['Add Department', 'Add Role', 'Add Employee', 'View All Departments', 'View All Employees', 'Exit'],
+        choices: ['Add Department', 'Add Role', 'Add Employee', 'View All Departments', 'View All Roles', 'View All Employees', 'Exit'],
     });
 
     switch(data.actionType) {
@@ -32,6 +32,7 @@ async function optionMenu() {
         case 'Add Role': await addRole(); break;
         case 'Add Employee': await addEmployee(); break;
         case 'View All Departments': await displayDepartments(); break;
+        case 'View All Roles': await displayRoles(); break;
         case 'View All Employees': await displayEmployees(); break;
         case 'Exit': connection.end(); process.exit(0); break;
         default: break;
@@ -49,11 +50,38 @@ async function addDepartment() {
             name: 'deptartmentName'
         }
     );
-    connection.query(`INSERT INTO department (name) VALUES ("${data.deptartmentName}")`);
+    connection.query(`INSERT INTO departments (name) VALUES ("${data.deptartmentName}")`);
 }
 
 async function addRole() {
+    const data = await inquirer
+    .prompt(
+        [
+            {
+                type: 'input',
+                message: 'What\'s the role\'s title?',
+                name: 'roleTitle'
+            },
+            {
+                type: 'input',
+                message: 'What\'s the role\'s salary?',
+                name: 'roleSalary'
+            },
+            {
+                type: 'input',
+                message: 'What\'s the role\'s departments ID?',
+                name: 'departmentID'
+            },
 
+        ]
+    );
+    const query = connection.query(`INSERT INTO roles SET ?`, {
+        title: data.roleTitle,
+        salary: parseFloat(data.roleSalary),
+        department_id: parseInt(data.departmentID)
+    }, (err) => {
+        if (err) throw err;
+    });
 }
 
 async function addEmployee() {
@@ -61,7 +89,15 @@ async function addEmployee() {
 }
 
 async function displayDepartments() {
-    connection.query(`SELECT * FROM department`,
+    connection.query(`SELECT * FROM departments`,
+    (err, res) => {
+        console.log('\n');
+        console.table(res);
+    });
+}
+
+async function displayRoles() {
+    connection.query(`SELECT * FROM roles`,
     (err, res) => {
         console.log('\n');
         console.table(res);
@@ -69,12 +105,12 @@ async function displayDepartments() {
 }
 
 async function displayEmployees() {
-    connection.query(`SELECT employee.id, first_name, last_name, title, department.name AS department, role.salary FROM employee
-    LEFT JOIN role
-    ON employee.role_id = role.id
-    LEFT JOIN department 
-    ON role.department_id = department.id
-    GROUP BY employee.id;`,
+    connection.query(`SELECT employees.id, first_name, last_name, title, departments.name AS departments, roles.salary FROM employees
+    LEFT JOIN roles
+    ON employees.roles_id = roles.id
+    LEFT JOIN departments 
+    ON roles.department_id = departments.id
+    GROUP BY employees.id;`,
     (err, res) => {
         console.table(res);
     });
