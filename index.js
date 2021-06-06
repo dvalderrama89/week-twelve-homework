@@ -24,13 +24,14 @@ async function optionMenu() {
         type: 'list',
         message: 'What would you like to do? (User arrow keys)',
         name: 'actionType',
-        choices: ['Add Department', 'Add Role', 'Add Employee', 'View All Departments', 'View All Roles', 'View All Employees', 'Exit'],
+        choices: ['Add Department', 'Add Role', 'Add Employee', 'Update Employee Role', 'View All Departments', 'View All Roles', 'View All Employees', 'Exit'],
     });
 
     switch(data.actionType) {
         case 'Add Department' : await addDepartment(); break;
         case 'Add Role': await addRole(); break;
         case 'Add Employee': await addEmployee(); break;
+        case 'Update Employee Role': await updateEmployeeRole(); break;
         case 'View All Departments': await displayDepartments(); break;
         case 'View All Roles': await displayRoles(); break;
         case 'View All Employees': await displayEmployees(); break;
@@ -85,7 +86,61 @@ async function addRole() {
 }
 
 async function addEmployee() {
+    const data = await inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: 'What\'s the employee\'s first name?',
+            name: 'firstName',
+        },
+        {
+            type: 'input',
+            message: 'What is the employee\'s last name?',
+            name: 'lastName',
+        },
+        {
+            type: 'input',
+            message: 'What is the employee\'s role ID?',
+            name: 'roleID',
+        },
+        {
+            type: 'input',
+            message: 'What is the employee\'s manager ID?',
+            name: 'managerID',
+        },
+    ]).then(data => {
+        const query = connection.query(`INSERT INTO employees SET ?`, 
+        {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            roles_id: data.roleID,
+            manager_id: data.managerID,
+        });
+    });
+}
 
+async function updateEmployeeRole() {
+    const data = await inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: 'What is the Employee ID of the Employee you want to change?',
+            name: 'employeeID'
+        },
+        {
+            type: 'input',
+            message: 'What is the role ID of the Employee\'s new role?',
+            name: 'roleID'
+        },
+    ]).then(data => {
+        const query = connection.query(`UPDATE employees SET ? WHERE ?`, [{
+            roles_id: data.roleID
+        }, {
+            id: data.employeeID
+        }], (err, res) => {
+            if (err) throw err;
+        });
+    });
 }
 
 async function displayDepartments() {
@@ -112,6 +167,7 @@ async function displayEmployees() {
     ON roles.department_id = departments.id
     GROUP BY employees.id;`,
     (err, res) => {
+        console.log("\n");
         console.table(res);
     });
 }
