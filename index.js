@@ -24,7 +24,7 @@ async function optionMenu() {
         type: 'list',
         message: 'What would you like to do? (User arrow keys)',
         name: 'actionType',
-        choices: ['Add Department', 'Add Role', 'Add Employee', 'Update Employee Role', 'View All Departments', 'View All Roles', 'View All Employees', 'Exit'],
+        choices: ['Add Department', 'Add Role', 'Add Employee', 'Update Employee Role', 'Update Employee Manager', 'View All Departments', 'View All Roles', 'View All Employees', 'Exit'],
     });
 
     switch(data.actionType) {
@@ -32,6 +32,7 @@ async function optionMenu() {
         case 'Add Role': await addRole(); break;
         case 'Add Employee': await addEmployee(); break;
         case 'Update Employee Role': await updateEmployeeRole(); break;
+        case 'Update Employee Manager': await updateEmployeeManager(); break;
         case 'View All Departments': await displayDepartments(); break;
         case 'View All Roles': await displayRoles(); break;
         case 'View All Employees': await displayEmployees(); break;
@@ -143,6 +144,30 @@ async function updateEmployeeRole() {
     });
 }
 
+async function updateEmployeeManager() {
+    const data = await inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: 'What is the Employee ID of the Employee you want to change?',
+            name: 'employeeID'
+        },
+        {
+            type: 'input',
+            message: 'What is the new manager ID?',
+            name: 'managerID'
+        },
+    ]).then(data => {
+        const query = connection.query(`UPDATE employees SET ? WHERE ?`, [{
+            manager_id: data.managerID
+        }, {
+            id: data.employeeID
+        }], (err, res) => {
+            if (err) throw err;
+        });
+    });
+}
+
 async function displayDepartments() {
     connection.query(`SELECT * FROM departments`,
     (err, res) => {
@@ -160,7 +185,7 @@ async function displayRoles() {
 }
 
 async function displayEmployees() {
-    connection.query(`SELECT employees.id, first_name, last_name, title, departments.name AS departments, roles.salary FROM employees
+    connection.query(`SELECT employees.id, first_name, last_name, title, departments.name AS departments, roles.salary, manager_id FROM employees
     LEFT JOIN roles
     ON employees.roles_id = roles.id
     LEFT JOIN departments 
